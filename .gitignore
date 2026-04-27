@@ -1,0 +1,94 @@
+# ── Python ──────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+*.whl
+pip-wheel-metadata/
+MANIFEST
+
+# ── Virtual environments ─────────────────────────────────────────────────────
+venv/
+.venv/
+env/
+ENV/
+.Python
+
+# ── Environment / secrets ────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.cert
+secrets/
+
+# ── IDE ──────────────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ── Jupyter ──────────────────────────────────────────────────────────────────
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# ── Testing / Coverage ───────────────────────────────────────────────────────
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+.tox/
+.nox/
+junit.xml
+
+# ── Type checkers ────────────────────────────────────────────────────────────
+.mypy_cache/
+.pyright/
+.ruff_cache/
+
+# ── Data & model artifacts ───────────────────────────────────────────────────
+# Local vector store indexes
+vector_store_data/
+chroma_data/
+saved_index*/
+pipeline_state/
+
+# Embedding cache (can be large)
+.embed_cache/
+
+# BM25 index files
+bm25_data/
+*.pkl
+
+# Sample / test data (committed separately if needed)
+sample_data/
+*.pdf
+*.docx
+
+# ── Logs ─────────────────────────────────────────────────────────────────────
+*.log
+logs/
+
+# ── Docker ───────────────────────────────────────────────────────────────────
+.docker/
+
+# ── Monitoring ───────────────────────────────────────────────────────────────
+grafana_data/
+prometheus_data/
+
+# ── Evaluation outputs ───────────────────────────────────────────────────────
+evaluation_report.json
+notebooks/*.png
+
+# ── Misc ─────────────────────────────────────────────────────────────────────
+*.bak
+*.tmp
+.cache/

@@ -1,0 +1,108 @@
+name: Bug Report
+description: File a bug report for the RAG system
+title: "[Bug]: "
+labels: ["bug", "triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+        Please provide as much detail as possible to help us reproduce and fix the issue.
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Affected Component
+      description: Which part of the system is affected?
+      options:
+        - data_pipeline / document_loader
+        - data_pipeline / chunking
+        - embeddings
+        - vector_store / FAISS
+        - vector_store / ChromaDB
+        - vector_store / Pinecone
+        - retrieval / dense
+        - retrieval / BM25
+        - retrieval / hybrid
+        - retrieval / reranker
+        - generation / prompt_builder
+        - generation / llm_interface
+        - evaluation
+        - api / FastAPI
+        - rag_pipeline (orchestrator)
+        - docker / deployment
+        - other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of the bug.
+      placeholder: "When I call pipeline.query() with filter={'file_type': 'pdf'}, the FAISS store returns zero results even though matching chunks exist..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal Reproducible Example
+      description: Paste the smallest code snippet that reproduces the issue.
+      render: python
+      placeholder: |
+        from rag_pipeline import RAGPipeline
+        pipeline = RAGPipeline.from_config()
+        pipeline.index(["./docs/"])
+        result = pipeline.query("...", filter={"file_type": "pdf"})
+        # Expected: results, Got: empty list
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What did you expect to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: What actually happened? Include the full traceback if applicable.
+      render: text
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: |
+        Run `pip show rag-system` and `python --version` and paste the output.
+      render: text
+      placeholder: |
+        Python: 3.11.5
+        OS: Ubuntu 22.04 / Windows 11 / macOS 14.0
+        FAISS: 1.8.0
+        sentence-transformers: 3.0.0
+        LLM provider: openai / ollama
+        Vector store: faiss / chroma
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues and this is not a duplicate
+          required: true
+        - label: I am using the latest version
+          required: true
+        - label: I have included a minimal reproducible example
+          required: true

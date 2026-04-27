@@ -1,0 +1,167 @@
+version: "3.9"
+
+# ── RAG System — Full Stack ─────────────────────────────────────────────────
+# Services:
+#   rag-api      — FastAPI application (main service)
+#   redis        — Query result cache
+#   chromadb     — Vector store (alternative to FAISS)
+#   prometheus   — Metrics scraping
+#   grafana      — Metrics dashboards
+#
+# Usage:
+#   docker-compose up -d                  # start all services
+#   docker-compose up rag-api redis       # start API + cache only
+#   docker-compose logs -f rag-api        # follow API logs
+
+services:
+
+  # ── RAG API ────────────────────────────────────────────────────────────────
+  rag-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    image: rag-system:latest
+    container_name: rag-api
+    restart: unless-stopped
+    ports:
+      - "${API_PORT:-8080}:8080"
+      - "8001:8001"          # Prometheus metrics
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - AZURE_OPENAI_ENDPOINT=${AZURE_OPENAI_ENDPOINT}
+      - AZURE_OPENAI_API_KEY=${AZURE_OPENAI_API_KEY}
+      - COHERE_API_KEY=${COHERE_API_KEY}
+      - PINECONE_API_KEY=${PINECONE_API_KEY}
+      - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY}
+      - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY}
+      - API_KEYS=${API_KEYS:-dev-key-12345}
+      - DISABLE_AUTH=${DISABLE_AUTH:-false}
+      - REDIS_URL=redis://redis:6379/0
+      - ENV=${ENV:-production}
+    volumes:
+      - rag_vector_data:/app/vector_store_data
+      - rag_chroma_data:/app/chroma_data
+      - rag_embed_cache:/app/.embed_cache
+      - rag_bm25_data:/app/bm25_data
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+    networks:
+      - rag-network
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: "4.0"
+        reservations:
+          memory: 2G
+
+  # ── Redis Cache ────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: rag-redis
+    restart: unless-stopped
+    command: >
+      redis-server
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+      --save ""
+      --appendonly no
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - rag-network
+
+  # ── ChromaDB (optional; use instead of FAISS for persistent vector store) ──
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: rag-chromadb
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - rag_chroma_data:/chroma/chroma
+    environment:
+      - CHROMA_SERVER_HOST=0.0.0.0
+      - CHROMA_SERVER_HTTP_PORT=8000
+      - ANONYMIZED_TELEMETRY=false
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    networks:
+      - rag-network
+    profiles:
+      - chroma         # start only with: docker-compose --profile chroma up
+
+  # ── Prometheus ─────────────────────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: rag-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.retention.time=15d"
+    networks:
+      - rag-network
+    profiles:
+      - monitoring
+
+  # ── Grafana ────────────────────────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:latest
+    container_name: rag-grafana
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin123}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+    depends_on:
+      - prometheus
+    networks:
+      - rag-network
+    profiles:
+      - monitoring
+
+# ── Volumes ─────────────────────────────────────────────────────────────────
+volumes:
+  rag_vector_data:
+    driver: local
+  rag_chroma_data:
+    driver: local
+  rag_embed_cache:
+    driver: local
+  rag_bm25_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+
+# ── Networks ─────────────────────────────────────────────────────────────────
+networks:
+  rag-network:
+    driver: bridge
