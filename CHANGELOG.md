@@ -9,7 +9,6 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ## [Unreleased]
 
 ### Added
-- GitHub Actions CI/CD workflow (lint, test, docker build, publish)
 - `pyproject.toml` with full tool configuration (ruff, black, mypy, pytest)
 - `Makefile` with developer convenience targets
 - `CONTRIBUTING.md` with code standards and module guide

@@ -386,17 +386,6 @@ Application Gateway → Load balancer
 Monitor         → Logging
 ```
 
-### CI/CD Pipeline (GitHub Actions)
-```yaml
-on: [push]
-jobs:
-  test:  → pytest + mypy
-  build: → docker build + push to registry
-  scan:  → trivy security scan
-  deploy:→ helm upgrade (Kubernetes) OR
-           aws ecs update-service (ECS)
-```
-
 ---
 
 ## 7. RAG Failure Modes & Mitigations
